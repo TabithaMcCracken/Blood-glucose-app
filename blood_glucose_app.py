@@ -1,6 +1,11 @@
+# Part 1
 # Extract from the csv file: 
-# patient name & date range in a dictionary
-# glucose values & timestamp in a list of tuples
+# patient name & date range in a dictionary ^
+# glucose values & timestamp in a list of tuples ^
+
+# Part 2
+# Use OpenAI to analyze the data
+
 
 
 import csv
@@ -44,10 +49,6 @@ def get_glucose_data (file_path):
     with open(file_path, "r", encoding='utf-8-sig') as file:
         csvreader = csv.reader(file)
         patient_info_line = next(csvreader)
-        print(patient_info_line)
-        print(type(patient_info_line))
-
-        # patient_info = convert_patient_info_data_to_dictionary(patient_info_line)
 
         headers = next(csvreader)
 
@@ -57,33 +58,13 @@ def get_glucose_data (file_path):
 
     return patient_info_line, glucose_data # a dictionary and a list of tuples
 
-patient_info_line, cgm_data = get_glucose_data(file_path)
+if __name__ == "__main__":
+    # Gets patient info and cgm data from csv file
+    patient_info_line, cgm_data = get_glucose_data(file_path)
 
-parsed_patient_info = convert_patient_info_data_to_dictionary(patient_info_line)
-print(parsed_patient_info)
-
-
-
-
-
+    # Extracts desired patient info and puts it into a dictionary
+    parsed_patient_info = convert_patient_info_data_to_dictionary(patient_info_line)
+    print(parsed_patient_info)
 
 
 
-# final_line = file.readlines()[-1]
-# print(final_line)
-
-# with open(file_path, "r") as file:
-#     csvreader = csv.reader(file)
-#     csv_patient_info = next(csvreader)
-#     csv_headings = next(csvreader)
-#     first_line = next(csvreader)
-# print (csv_patient_info)
-# print(csv_headings)
-# print(first_line[0])
-
-# print(f"First Date: {first_line[0][0:10]}")
-
-
-# Check for value errors in the header
-# if headers != ["Timestamp", "CGM Glucose Value (mg/dl)", "Serial Number"]
-#     raise ValueError("CSV Values are unexpected!")
