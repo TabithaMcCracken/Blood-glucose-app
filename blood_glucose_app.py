@@ -13,6 +13,15 @@ import csv
 file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cgm_data.csv"
 
 def convert_patient_info_data_to_dictionary(patient_info_line):
+    """Extracts desired patient info and puts it into a dictionary
+
+    Args:
+        patient_info_line (list): patient info from the csv file
+
+    Returns:
+        patient_info (dict): name, start_date, end_date of data
+    """
+
     name_part = patient_info_line[0]
     if ":" in name_part:
         patient_name = name_part.split(":")[1].strip()
@@ -46,14 +55,14 @@ def get_glucose_data (file_path):
 
     glucose_data = []
 
-    with open(file_path, "r", encoding='utf-8-sig') as file:
+    with open(file_path, "r", encoding='utf-8') as file:
         csvreader = csv.reader(file)
         patient_info_line = next(csvreader)
 
         headers = next(csvreader)
 
         for row in csvreader:
-            time_stamp, glucose, device = row # We don't need the device info
+            time_stamp, glucose, _ = row # We don't need the device info
             glucose_data.append((time_stamp, glucose)) # Adding parenthesis makes it a tuple
 
     return patient_info_line, glucose_data # a dictionary and a list of tuples
@@ -61,7 +70,9 @@ def get_glucose_data (file_path):
 if __name__ == "__main__":
     # Gets patient info and cgm data from csv file
     patient_info_line, cgm_data = get_glucose_data(file_path)
-
+    print(patient_info_line)
+    print(len(str(cgm_data)))
+    
     # Extracts desired patient info and puts it into a dictionary
     parsed_patient_info = convert_patient_info_data_to_dictionary(patient_info_line)
     print(parsed_patient_info)
