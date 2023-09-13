@@ -5,9 +5,6 @@
 
 # Part 2
 # Use OpenAI to analyze the data
-
-
-
 import csv
 
 file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cgm_data.csv"
@@ -76,6 +73,8 @@ if __name__ == "__main__":
     # Extracts desired patient info and puts it into a dictionary
     parsed_patient_info = convert_patient_info_data_to_dictionary(patient_info_line)
     print(parsed_patient_info)
+
+    user_prompt = input("What would you like to ask ")
 
 
 
