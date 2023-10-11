@@ -6,7 +6,7 @@
 # Part 2
 # Use OpenAI to analyze the data
 import csv
-from open_ai_chat import analyze_glucose_data_with_openai
+from open_ai_chat import chat
 
 file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cgm_data_one_day.csv"
 
@@ -74,8 +74,8 @@ if __name__ == "__main__":
     parsed_patient_info = convert_patient_info_data_to_dictionary(patient_info_line)
     print(parsed_patient_info)
 
-    ai_response = analyze_glucose_data_with_openai(cgm_data)
-    print(ai_response)
+    ai_response = chat(cgm_data)
+    # print(ai_response)
     # user_prompt = input("What would you like to ask ")
 
 
