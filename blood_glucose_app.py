@@ -8,6 +8,7 @@
 import csv
 from open_ai_chat import chat
 from token_count import num_tokens_from_string
+from make_sample_data import display_glucose_levels
 # from make_sample_data import generate_glucose_levels
 
 file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cgm_data_one_day.csv"
@@ -84,7 +85,7 @@ if __name__ == "__main__":
     # Get data from file
     patient_info_line, cgm_data = get_glucose_data(file_path)
     print(patient_info_line)
-    print(cgm_data)
+    display_glucose_levels(cgm_data)
 
     # Make sample data set
     # cgm_data = generate_glucose_levels()
@@ -94,7 +95,7 @@ if __name__ == "__main__":
     print(f"Token size: {token_size}")
 
     if token_size < 4097:
-        # Starts AI chat
+        # Starts the AI chat
         ai_response = chat(cgm_data)
 
 

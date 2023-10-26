@@ -27,16 +27,34 @@ def generate_glucose_levels():
 
     return glucose_data
 
+# def display_glucose_levels(data):
+#     print("Time  | Blood Glucose Level")
+#     print("------" + "-" * 20)
+
+#     for entry in data:
+#         try:
+#             time, level = entry.split('|')
+#             print(f"{time} | {level}")
+#         except ValueError:
+#             print(f"Error with entry: {entry}")
+
 def display_glucose_levels(data):
-    print("Time  | Blood Glucose Level")
-    print("------" + "-" * 20)
+    # Constants for display
+    MIN_GLUCOSE = 60
+    SCALE_FACTOR = 0.2  # This will determine the length of bars
+
+    print("Time  | Glucose Level | Graph")
+    print("------|---------------|--------------------")
 
     for entry in data:
-        try:
-            time, level = entry.split('|')
-            print(f"{time} | {level}")
-        except ValueError:
-            print(f"Error with entry: {entry}")
+        time, level_str = entry.split('|')
+        level = int(level_str)
+
+        # Calculate bar length based on glucose level and scale factor
+        bar_length = int((level - MIN_GLUCOSE) * SCALE_FACTOR)
+        bar = '#' * bar_length
+
+        print(f"{time} | {level:13} | {bar}")
 
 
 if __name__ == "__main__":
