@@ -10,6 +10,6 @@ def num_tokens_from_string(string: str) -> int:
 
 
 if __name__ == "__main__":
-    sample_data = "I love pizza."
+    sample_data = "I love pizza." # Where should this go? Is it global?
     num_of_tokens = num_tokens_from_string(f"{sample_data}")
     print(num_of_tokens)
