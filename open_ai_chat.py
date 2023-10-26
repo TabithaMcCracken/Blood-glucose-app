@@ -7,66 +7,30 @@
 # Evening: 6pm - 12midnight
 # Overnight: 12midnight - 6am
 
-
 from datetime import datetime, timedelta
 from secret import key
 import openai
-
-def make_sample_data_set():
-    """Create a tuple we can use as a sample data set
-
-    Returns:
-        Tuple: timestamp and blood glucose level
-    """
-
-    # Start from the current time
-    start_time = datetime.now()
-
-    # Generate the user_data list
-    sample_data = tuple((start_time + timedelta(minutes=5 * i), 80 + i % 10) for i in range(24))
-
-    # Example printout
-    for timestamp, level in sample_data:
-       print(timestamp.strftime('%Y-%m-%d %H:%M'), level)
-    return sample_data
-
-# def analyze_glucose_data_with_openai(user_data):
-#     openai.api_key = key
-#     system_msg = "You are a helpful assistant."
-#     # Convert the data to a string for analysis
-#     data_str = "\n".join(["{}: {}".format(timestamp, level) for timestamp, level in user_data])
- 
-
-#     user_prompt = f"Analyze the following blood glucose data giving us a blood glucose range and general observations in one paragraph:\n{data_str}"
-
-#     response = openai.ChatCompletion.create(
-#         model="gpt-3.5-turbo",
-#         messages=[
-#             {"role": "system", "content": system_msg},
-#             {"role": "user", "content": user_prompt}
-#         ], 
-#         max_tokens=200  # Adjust based on your needs
-#     )
-
-#     return response["choices"][0]["message"]["content"]
-
-# if __name__ == "__main__":
-#     user_data = make_sample_data_set()
-#     # ai_analysis = analyze_glucose_data_with_openai(user_data)
-#     # print(ai_analysis)
+from make_sample_data import generate_glucose_levels
+from token_count import num_tokens_from_string
 
 def chat(cgm_data):
-    """Creates a conversation with openai api."""
+    """Generates a conversation with openai.
+
+    Args:
+        cgm_data (tuple): 24 hours of bgl's in 5 minute increments
+
+    Returns:
+        list: conversation with openai
+    """
+
+    print("Welcome! Here is the analysis for this weeks data...(Type 'exit' to quit)")
+
     openai.api_key = key
     chatbot_conversation = []
     system_msg = "You are a helpful assistant."
     chatbot_conversation.append({"role": "system", "content": system_msg})
 
-    #Convert data to a string for analysis
-    data_str = "\n".join(["{}: {}".format(time_stamp, glucose) for time_stamp, glucose in cgm_data])
-    print(type(data_str))
-
-    initial_user_prompt = f'Analyze the following blood glucose data giving us a blood glucose range and general observations in one paragraph:\n{data_str}'
+    initial_user_prompt = f'Analyze the following blood glucose data where the first number is the time stamp and the second is the blood glucose level giving us a blood glucose range and general observations in one paragraph:\n{cgm_data}'
     chatbot_conversation.append({"role": "user", "content": initial_user_prompt})
     
     response = openai.ChatCompletion.create(
@@ -98,9 +62,14 @@ def chat(cgm_data):
         print(f"Chatbot: {chatbot_repsonse}")
         chatbot_conversation.append({"role": "assistant", "content": chatbot_repsonse})
 
+    
     return chatbot_conversation
 
 if __name__ == "__main__":
-    cgm_data = make_sample_data_set()
-    print("Welcome! Here is the analysis for this weeks data...(Type 'exit' to quit)")
-    analysis_conv = chat(cgm_data)
+    # Create a data set to use
+    cgm_data = generate_glucose_levels()
+    token_count = num_tokens_from_string(cgm_data)
+    print(token_count)
+    # Run the chat
+    
+    # analysis_conv = chat(cgm_data)
