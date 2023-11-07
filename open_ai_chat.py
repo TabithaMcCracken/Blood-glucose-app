@@ -46,21 +46,34 @@ def chat(cgm_data):
     print("What else would you like to know?")
 
     while True:
+        if num_tokens_from_string(chatbot_conversation) < 4097:
+            user_input = input ("User: ")
+            if user_input.lower() == "exit":
+                break
 
-        user_input = input ("User: ")
-        if user_input.lower() == "exit":
+            chatbot_conversation.append({"role": "user", "content": user_input})
+
+            token_size = num_tokens_from_string(chatbot_conversation)
+            print(f"Token size: {token_size}")
+
+            if token_size < 4097:
+                response = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=chatbot_conversation
+                )
+
+                chatbot_repsonse = response["choices"][0]["message"]["content"]
+                print(f"Chatbot: {chatbot_repsonse}")
+                chatbot_conversation.append({"role": "assistant", "content": chatbot_repsonse})
+                print(f"Token size after response: {num_tokens_from_string(chatbot_conversation)}")
+                
+            else:
+                print("The conversation is too large to process.")
+                break
+
+        else:
+            print("The conversation is too large to process.")
             break
-
-        chatbot_conversation.append({"role": "user", "content": user_input})
-
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=chatbot_conversation
-        )
-
-        chatbot_repsonse = response["choices"][0]["message"]["content"]
-        print(f"Chatbot: {chatbot_repsonse}")
-        chatbot_conversation.append({"role": "assistant", "content": chatbot_repsonse})
 
     
     return chatbot_conversation
