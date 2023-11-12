@@ -34,25 +34,8 @@ def generate_glucose_levels():
 
     return glucose_data
 
-def display_glucose_levels(data):
-
-    print("Date       | Time  | Glucose | Graph")
-    print("-----------|-------|---------|--------------------")
-
-    for entry in data:
-        date, time, level_str = entry.split('|')
-        level = int(level_str)
-
-        # Calculates bar length based on glucose level and scale factor
-        bar_length = int((level - MIN_GLUCOSE) * SCALE_FACTOR)
-        bar = '#' * bar_length
-
-        print(f"{date} | {time} | {level:7} | {bar}")
-
 
 if __name__ == "__main__":
     # Testing the function with generated data
     data = generate_glucose_levels()
-    print(data)
-    display_glucose_levels(data)
 

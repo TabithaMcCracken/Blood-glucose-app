@@ -25,6 +25,7 @@ def chat(cgm_data):
 
     print("Welcome! Here is the analysis for this weeks data...(Type 'exit' to quit)")
 
+
     openai.api_key = key
     chatbot_conversation = []
     system_msg = "You are a helpful assistant."

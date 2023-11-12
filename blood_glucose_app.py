@@ -19,7 +19,7 @@
 import csv
 from open_ai_chat import chat
 from token_count import num_tokens_from_string
-from make_sample_data import display_glucose_levels
+from display_glucose_data import display_glucose_levels
 # from make_sample_data import generate_glucose_levels
 
 file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cgm_data_one_day.csv"
@@ -131,13 +131,18 @@ def condense_data(data):
 
     return condensed
 
+def remove_date (data):
+    # Remove the date from the data string
+    shortened_data = [data_string.split('|', 1)[1] for data_string in data]
+    return shortened_data
+
 if __name__ == "__main__":
     # Gets patient info and cgm data from csv file or make a sample data set
 
     # Get data from file
     patient_info_line, cgm_data = get_glucose_data(file_path)
         
-    # display_glucose_levels(cgm_data)
+    # display_glucose_levels(cgm_data, patient_info_line)
 
     # # Make sample data set- only needed if user has no data
     # # cgm_data = generate_glucose_levels()
@@ -151,9 +156,14 @@ if __name__ == "__main__":
     condensed_token_size = num_tokens_from_string(condensed_data)
     print(f"Token size after condensing: {condensed_token_size}")
 
-    # display_glucose_levels(condensed_data)
+    # Remove the date from the data string
+    short_cgm_data = remove_date(cgm_data)
 
-    # if token_size < 4097:
+    # display_glucose_levels(condensed_data)
+    final_token_check = num_tokens_from_string(short_cgm_data)
+    print(f"Final token size: {final_token_check}")
+
+    # if final_token_check < 4097:
     #     # Starts the AI chat
     #     ai_response = chat(cgm_data)
 
