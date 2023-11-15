@@ -1,7 +1,5 @@
 # Create an instance of the class
-
-# Load the data from the csv file
-
+# Load the data from the csv file 
 # Get the patient info and cgm data (into the instance of the class)
 
 # Back the data up into the SQL database
@@ -68,7 +66,7 @@ def read_csv(file_path):
 
 
 def insert_into_database(data_list):
-    connection = sqlite3.connect('glucose_data.db')
+    connection = sqlite3.connect('/usr/local/mysql/data/glucose_data.db')
     cursor = connection.cursor()
 
     for data in data_list:
@@ -81,7 +79,7 @@ def insert_into_database(data_list):
     connection.close()
 
 if __name__ == "__main__":
-    # Create instance of class
+    # Create instance of class with the current file path
     glucose_data_list = read_csv(file_path)
 
     if glucose_data_list:
