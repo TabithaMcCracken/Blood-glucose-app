@@ -19,17 +19,12 @@ import pymysql
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, MetaData
 from sqlalchemy.orm import declarative_base, Session
 
+file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cgm_data_one_day.csv"
+
 # Define the SQLAlchemy model
 Base = declarative_base()
 
-
-file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cgm_data_one_day.csv"
-# Replace 'your_mysql_username', 'your_mysql_password', 'your_mysql_host', and 'your_mysql_database' with your MySQL credentials
 mysql_engine = create_engine(f"mysql+mysqlconnector://root:{password}@localhost/glucose_data")
-
-# sql_engine = sqlalchemy.create_engine(f'mysql+pymysql://root:{password}@localhost/glucose_data')
-# connection = sql_engine.connect()
-# metadata = sqlalchemy.MetaData()
 
 
 class GlucoseData(Base):
@@ -40,13 +35,6 @@ class GlucoseData(Base):
     time_stamp = Column(DateTime)
     glucose_value = Column(Float)
 
-# # Define a class to store the data
-# class GlucoseData:
-#     def __init__(self, id, name, timestamp, glucose_value):
-#         self.id = id
-#         self.name = name
-#         self.timestamp = timestamp
-#         self.glucose_value = glucose_value
 
 # Function to read CSV file and create GlucoseData objects
 def read_csv(file_path):
@@ -74,17 +62,6 @@ def read_csv(file_path):
             )
             glucose_data_list.append(glucose_data)
     return glucose_data_list
-
-
-# def insert_into_database(metadata, engine, connection, glucose_data):
-#     # Connect to local database
-#     if glucose_data:
-#         data_list = sqlalchemy.Table('glucose_data', metadata, autoload=True, autoload_with=engine)
-#         query = sqlalchemy.insert(data_list)
-#         result_proxy = connection.execute(query, glucose_data)
-
-#     else:
-#         print("There was no data, so no data was added to the database.")
 
 
 def insert_into_database(data_list, engine):
