@@ -4,10 +4,9 @@
 
 # Back the data up into the SQL database
 
-# Condense the data to send to the OpenAI API
-
 # Anazlyze the data ? (Pandas)
 
+# Condense the data to send to the OpenAI API
 # Start an AI chat
 
 
@@ -54,11 +53,11 @@ def read_csv(file_path):
         
         for row in reader:
             time_stamp = datetime.strptime(row[0], '%Y-%m-%d %H:%M')
-            glucose_value = float(row[1])
+            glucose_amount = float(row[1])
             glucose_data = GlucoseData(
                 name=patient_name,
                 time_stamp=time_stamp,
-                glucose_value=int(glucose_value)
+                glucose_value=glucose_amount
             )
             glucose_data_list.append(glucose_data)
     return glucose_data_list
