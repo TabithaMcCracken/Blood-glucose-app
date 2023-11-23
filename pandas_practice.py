@@ -22,5 +22,13 @@ import pandas as pd
 
 file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cgm_data_one_day.csv"
 glucose = pd.read_csv(f"{file_path}")
-print(glucose.head(8))
-print(glucose.dtypes)
+# print(glucose.head(8))
+# print(glucose.dtypes)
+# print(glucose.tail(4))
+# glucose_levels = glucose["Timestamp"]
+# print(glucose_levels)
+
+if "Timestamp" in glucose:
+    print("It's there.")
+
+print(glucose.columns)
