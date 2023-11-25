@@ -17,6 +17,9 @@ from secret import password
 import pymysql
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, MetaData
 from sqlalchemy.orm import declarative_base, Session
+import pandas as pd
+import matplotlib.pyplot as plt
+
 
 file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cgm_data_one_day.csv"
 
@@ -70,14 +73,40 @@ def insert_into_database(data_list, engine):
             session.add(data)
         session.commit()
     
+
+def plot_data_from_database(engine):
+    with Session(engine) as session:
+        # Query all data from the database
+        query_result = session.query(GlucoseData).all()
+
+        # Convert the query result to a Pandas DataFrame
+        df = pd.DataFrame([(data.id, data.name, data.time_stamp, data.glucose_value) for data in query_result],
+                            columns=['id', 'name', 'time_stamp', 'glucose_value'])
+
+        # Plot the data
+        plt.figure(figsize=(10, 6))
+        plt.plot(df['time_stamp'], df['glucose_value'], marker='o', linestyle='-', color='b')
+        plt.title('Blood Glucose Levels Over Time')
+        plt.xlabel('Time Stamp')
+        plt.ylabel('Glucose Value')
+        plt.xticks(rotation=45)
+        plt.grid(True)
+        plt.tight_layout()
+
+        # Show the plot
+        plt.show()
+
+
 if __name__ == "__main__":
     # Create instance of class with the current file path
     glucose_data_list = read_csv(file_path)
 
+    if glucose_data_list:
+        insert_into_database(glucose_data_list, mysql_engine)
+
+    plot_data_from_database(mysql_engine)
+    
     # for item in glucose_data_list:
     #     print(f"Name: {item.name}")
     #     print(f"Timestamp: {item.time_stamp}")
     #     print(f"Glucose Value: {item.glucose_value}")
-
-    if glucose_data_list:
-        insert_into_database(glucose_data_list, mysql_engine)
