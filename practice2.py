@@ -1,4 +1,4 @@
-# Create an instance of the class
+
 # Load the data from the csv file 
 # Get the patient info and cgm data (into the instance of the class)
 
@@ -19,6 +19,9 @@ from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, 
 from sqlalchemy.orm import declarative_base, Session
 import pandas as pd
 import matplotlib.pyplot as plt
+import plotille
+from sqlalchemy.orm import sessionmaker
+import matplotlib.ticker as ticker
 
 
 file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cgm_data_one_day.csv"
@@ -26,6 +29,7 @@ file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cg
 # Define the SQLAlchemy model
 Base = declarative_base()
 
+# Create the MySQL engine
 mysql_engine = create_engine(f"mysql+mysqlconnector://root:{password}@localhost/glucose_data")
 
 
@@ -74,7 +78,7 @@ def insert_into_database(data_list, engine):
         session.commit()
     
 
-def plot_data_from_database(engine):
+def plot_data_from_database_with_matplotlib(engine):
     with Session(engine) as session:
         # Query all data from the database
         query_result = session.query(GlucoseData).all()
@@ -89,24 +93,61 @@ def plot_data_from_database(engine):
         plt.title('Blood Glucose Levels Over Time')
         plt.xlabel('Time Stamp')
         plt.ylabel('Glucose Value')
-        plt.xticks(rotation=45)
+
+        plt.gca().get_yaxis().set_major_formatter(ticker.FuncFormatter(lambda x, _: int(x)))
+
+        plt.xticks(rotation=90)
         plt.grid(True)
         plt.tight_layout()
 
         # Show the plot
         plt.show()
 
+def plot_data_from_database_with_plotille(engine):
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    # Query the data from the database
+    query_result = session.query(GlucoseData).all()
+
+    # Extract timestamps and glucose values from the query result
+    timestamps = [data.time_stamp for data in query_result]
+    glucose_values = [data.glucose_value for data in query_result]
+
+    # Reformats to integers
+    def _num_formatter(val, chars, delta, left=False):
+        align = '<' if left else ''
+        return '{:{}{}d}'.format(int(val), align, chars)
+
+
+    # Plot using plotille
+    plot = plotille.Figure()
+    plot.width = 80
+    plot.height = 30
+    plot.register_label_formatter(float, _num_formatter) # Reformat to integer
+    plot.register_label_formatter(int, _num_formatter) # Reformat to integer
+    plot.set_x_limits(min(timestamps), max(timestamps))
+    plot.set_y_limits(min(glucose_values), max(glucose_values) + 10)
+    plot.plot(timestamps, glucose_values, lc='red')
+    # plot.scatter(timestamps, glucose_values, lc='red')
+    print(plot.show(legend=True))
+    
+    session.close()
+
 
 if __name__ == "__main__":
-    # Create instance of class with the current file path
+    # Get data from CSV file
     glucose_data_list = read_csv(file_path)
 
-    if glucose_data_list:
-        insert_into_database(glucose_data_list, mysql_engine)
+    # Put data into database
+    # if glucose_data_list:
+    #     insert_into_database(glucose_data_list, mysql_engine)
 
-    plot_data_from_database(mysql_engine)
-    
-    # for item in glucose_data_list:
-    #     print(f"Name: {item.name}")
-    #     print(f"Timestamp: {item.time_stamp}")
-    #     print(f"Glucose Value: {item.glucose_value}")
+    # Plot the data from the database with Matplotlib
+    # plot_data_from_database_with_matplotlib(mysql_engine)
+
+    # Plot the data from the database with Plotille
+    plot_data_from_database_with_plotille(mysql_engine)
+
+
+
