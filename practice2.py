@@ -4,7 +4,8 @@
 
 # Back the data up into the SQL database
 
-# Anazlyze the data ? (Pandas)
+# Anazlyze the data with Pandas
+# Analyze the data with Plotille
 
 # Condense the data to send to the OpenAI API
 # Start an AI chat
@@ -22,6 +23,7 @@ import matplotlib.pyplot as plt
 import plotille
 from sqlalchemy.orm import sessionmaker
 import matplotlib.ticker as ticker
+import matplotlib.dates as mdates
 
 
 file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cgm_data_one_day.csv"
@@ -94,9 +96,14 @@ def plot_data_from_database_with_matplotlib(engine):
         plt.xlabel('Time Stamp')
         plt.ylabel('Glucose Value')
 
+        # Set y-axis ticks to be integers
         plt.gca().get_yaxis().set_major_formatter(ticker.FuncFormatter(lambda x, _: int(x)))
+        # Set x-axis ticks to 45 degrees and size 8
+        plt.xticks(rotation=45, fontsize = 8)
 
-        plt.xticks(rotation=90)
+        # Reformat the timestamp on x-axis labels
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
+
         plt.grid(True)
         plt.tight_layout()
 
@@ -144,10 +151,10 @@ if __name__ == "__main__":
     #     insert_into_database(glucose_data_list, mysql_engine)
 
     # Plot the data from the database with Matplotlib
-    # plot_data_from_database_with_matplotlib(mysql_engine)
+    plot_data_from_database_with_matplotlib(mysql_engine)
 
     # Plot the data from the database with Plotille
-    plot_data_from_database_with_plotille(mysql_engine)
+    # plot_data_from_database_with_plotille(mysql_engine)
 
 
 
