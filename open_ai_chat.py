@@ -23,7 +23,7 @@ def chat(cgm_data):
         list: conversation with openai
     """
 
-    print("Welcome! Here is the analysis for this weeks data...(Type 'exit' to quit)")
+    print("Welcome! Here is the analysis for this data...(Type 'exit' to quit)")
 
 
     openai.api_key = key
@@ -31,13 +31,13 @@ def chat(cgm_data):
     system_msg = "You are a helpful assistant."
     chatbot_conversation.append({"role": "system", "content": system_msg})
 
-    initial_user_prompt = f'Analyze the following blood glucose data where the first number is the time stamp and the second is the blood glucose level giving us a blood glucose range and general observations in one paragraph:\n{cgm_data}'
+    initial_user_prompt = f'Analyze the following blood glucose data where the first number is the time stamp and the second is the blood glucose level. Give us the blood glucose range, the percentage of time in range between 70 and 130, and general observations in one paragraph:\n{cgm_data}'
     chatbot_conversation.append({"role": "user", "content": initial_user_prompt})
     
     response = openai.ChatCompletion.create(
         model = "gpt-3.5-turbo",
         messages = chatbot_conversation,
-        max_tokens = 200  # Adjust based on your needs
+        # max_tokens = 200  # Adjust based on your needs
     )
     
     
