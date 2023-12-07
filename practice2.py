@@ -53,16 +53,7 @@ class GlucoseData(Base):
     time_stamp = Column(DateTime, unique=True)
     glucose_value = Column(Float)
 
-def get_data_from_database(engine):
-    with Session(engine) as session:
-        # Query all data from the database
-        query_result = session.query(GlucoseData).all()
 
-        # Convert the query result to a Pandas DataFrame
-        df = pd.DataFrame([(data.id, data.name, data.time_stamp, data.glucose_value) for data in query_result],
-                            columns=['id', 'name', 'time_stamp', 'glucose_value'])
-        
-    return df
     
 # Function to read CSV file and create GlucoseData objects
 def read_csv(file_path):
@@ -111,8 +102,8 @@ def insert_into_database(data_list, engine):
 
         session.commit()
     print("Data added to the database.")
-    
-def plot_data_from_database_with_matplotlib(engine):
+
+def get_data_from_database(engine):
     with Session(engine) as session:
         # Query all data from the database
         query_result = session.query(GlucoseData).all()
@@ -120,6 +111,10 @@ def plot_data_from_database_with_matplotlib(engine):
         # Convert the query result to a Pandas DataFrame
         df = pd.DataFrame([(data.id, data.name, data.time_stamp, data.glucose_value) for data in query_result],
                             columns=['id', 'name', 'time_stamp', 'glucose_value'])
+        
+    return df
+ 
+def plot_data_from_database_with_matplotlib(df):
 
         # Plot the data
         plt.figure(figsize=(10, 6))
@@ -255,7 +250,8 @@ def get_condensed_data(engine):
 
 
 # Plot the data from the database with Matplotlib
-plot_data_from_database_with_matplotlib(mysql_engine)
+client_data = get_data_from_database(mysql_engine)
+plot_data_from_database_with_matplotlib(client_data)
 
 
 
