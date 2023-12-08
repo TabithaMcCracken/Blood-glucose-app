@@ -1,14 +1,6 @@
-
-# Load the data from the csv file 
-# Get the patient info and cgm data (into the instance of the class)
-
-# Back the data up into the SQL database
-
-# Anazlyze the data with Pandas
-# Analyze the data with Plotille
-
-# Condense the data to send to the OpenAI API
-# Start an AI chat
+# This application allows the user to store cgm data to SQL database, get and 
+# plot the last 24 hours of data from the database, or ask ChatGPT to analyze 
+# the last 24 hours of data
 
 
 import csv
@@ -52,7 +44,6 @@ class GlucoseData(Base):
     name = Column(String)
     time_stamp = Column(DateTime, unique=True)
     glucose_value = Column(Float)
-
 
     
 # Function to read CSV file and create GlucoseData objects
@@ -109,57 +100,68 @@ def get_data_from_database(engine):
         query_result = session.query(GlucoseData).all()
 
         # Convert the query result to a Pandas DataFrame
-        df = pd.DataFrame([(data.id, data.name, data.time_stamp, data.glucose_value) for data in query_result],
+        data_frame = pd.DataFrame([(data.id, data.name, data.time_stamp, data.glucose_value) for data in query_result],
                             columns=['id', 'name', 'time_stamp', 'glucose_value'])
         
-    return df
+    # Ensure that 'time_stamp' column is in datetime format
+    data_frame['time_stamp'] = pd.to_datetime(data_frame['time_stamp'])
+
+    # Sort DataFrame by time_stamp for proper plotting
+    data_frame = data_frame.sort_values(by='time_stamp')
+
+    # Find the maximum timestamp in the data
+    max_timestamp = data_frame['time_stamp'].max()
+
+    # Filter DataFrame to include only the last 24 hours' data
+    last_24_hours_data = data_frame[data_frame['time_stamp'] >= (max_timestamp - pd.DateOffset(days=1))]    
+    return last_24_hours_data
  
-def plot_data_from_database_with_matplotlib(df):
+def plot_data_from_database_with_matplotlib(data_frame):
 
-        # Plot the data
-        plt.figure(figsize=(10, 6))
-        plt.plot(df['time_stamp'], df['glucose_value'], marker='o', linestyle='-', color='b')
-        plt.title('Blood Glucose Levels Over Time')
-        plt.xlabel('Time Stamp')
-        plt.ylabel('Glucose Value')
+    # Ensure that 'time_stamp' column is in datetime format
+    data_frame['time_stamp'] = pd.to_datetime(data_frame['time_stamp'])
 
-        # Set y-axis ticks to be integers
-        plt.gca().get_yaxis().set_major_formatter(ticker.FuncFormatter(lambda x, _: int(x)))
-        # Set x-axis ticks to 45 degrees and size 8
-        plt.xticks(rotation=45, fontsize = 8)
+    # Sort DataFrame by time_stamp for proper plotting
+    data_frame = data_frame.sort_values(by='time_stamp')
 
-        # Reformat the timestamp on x-axis labels
-        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
+    # Find the maximum timestamp in the data
+    max_timestamp = data_frame['time_stamp'].max()
 
-        plt.grid(True)
-        plt.tight_layout()
+    # Filter DataFrame to include only the last 24 hours' data
+    last_24_hours_data = data_frame[data_frame['time_stamp'] >= (max_timestamp - pd.DateOffset(days=1))]
 
-        # Show the plot
-        plt.show()
+    # Plot the data
+    plt.figure(figsize=(10, 6))
+    plt.plot(last_24_hours_data['time_stamp'], last_24_hours_data['glucose_value'], marker='o', linestyle='-', color='b')
+    plt.title('Blood Glucose Levels Over Time')
+    plt.xlabel('Time Stamp')
+    plt.ylabel('Glucose Value')
 
-def plot_data_from_database_with_plotille(engine):
-    Session = sessionmaker(bind=engine)
-    session = Session()
+    # Set y-axis ticks to be integers
+    plt.gca().get_yaxis().set_major_formatter(ticker.FuncFormatter(lambda x, _: int(x)))
+    # Set x-axis ticks to 45 degrees and size 8
+    plt.xticks(rotation=45, fontsize = 8)
 
-    # Get the maximum timestamp in the database
-    max_timestamp = session.query(func.max(GlucoseData.time_stamp)).scalar()
+    # Reformat the timestamp on x-axis labels
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
 
-    if max_timestamp is not None:
+    plt.grid(True)
+    plt.tight_layout()
 
-        # Calculate the start and end dates for filtering (from midnight to the end of the last day)
-        start_date = max_timestamp.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_date = max_timestamp.replace(hour=23, minute=59, second=59, microsecond=999999)
+    # Show the plot
+    plt.show()
 
-        # Query the data from the database for the last day
-        query_result = session.query(GlucoseData).filter(GlucoseData.time_stamp.between(start_date, end_date)).all()
+def plot_data_from_database_with_plotille():
 
+    last_24_hours_data = get_data_from_database(mysql_engine)
 
-        timestamps = [data.time_stamp for data in query_result]
-        glucose_values = [data.glucose_value for data in query_result]
+    if last_24_hours_data.empty:
+        print("No data available in the database.")
 
-        # print(timestamps)
-        print("Min Timestamp:", min(timestamps))
-        print("Max Timestamp:", max(timestamps))
+    else:
+
+        time_stamps = last_24_hours_data['time_stamp']
+        glucose_values = last_24_hours_data['glucose_value']
 
         # Reformats to integers
         def _num_formatter(val, chars, delta, left=False):
@@ -173,17 +175,11 @@ def plot_data_from_database_with_plotille(engine):
         plot.height = 30
         plot.register_label_formatter(float, _num_formatter) # Reformat to integer
         plot.register_label_formatter(int, _num_formatter) # Reformat to integer
-        plot.set_x_limits(min(timestamps), max(timestamps))
+        plot.set_x_limits(min(time_stamps), max(time_stamps))
         plot.set_y_limits(min(glucose_values), max(glucose_values) + 10)
-        plot.plot(timestamps, glucose_values, lc='red')
-        # plot.scatter(timestamps, glucose_values, lc='red')
+        plot.plot(time_stamps, glucose_values, lc='red')
         print(plot.show(legend=True))
-    
-    else:
-        print("No data available in the database.")
 
-    session.close()
-    # print()
 
 # Function to get condensed data from the MySQL database
 def get_condensed_data(engine):
@@ -209,49 +205,51 @@ def get_condensed_data(engine):
 
         return glucose_data_strings
     
-# if __name__ == "__main__":
-#     while True:
-#         user_input = int(input(
-#             "What would you like to do?\n"
-#             "1) Upload data from a csv file to the database\n"
-#             "2) Plot the most recent days data\n"
-#             "3) Ask ChatGPT to analyze the most recent days data\n"
-#             "4) Exit the program\n"
-#         ))
+if __name__ == "__main__":
+    while True:
+        user_input = int(input(
+            "What would you like to do?\n"
+            "1) Upload data from a csv file to the database\n"
+            "2) Plot the last 24 hours of uploaded data\n"
+            "3) Ask ChatGPT to analyze the most recent days data\n"
+            "4) Exit the program\n"
+        ))
 
-#         if user_input == 1:
-#             # Get data from CSV file
-#             glucose_data_list = read_csv(file_path)
+        if user_input == 1:
+            # Get data from CSV file
+            glucose_data_list = read_csv(file_path)
 
-#             # Put data into database
-#             if glucose_data_list:
-#                 insert_into_database(glucose_data_list, mysql_engine)
+            # Put data into database
+            if glucose_data_list:
+                insert_into_database(glucose_data_list, mysql_engine)
 
-#         elif user_input == 2:
-#             # Plot the data from the database with Plotille
-#             plot_data_from_database_with_plotille(mysql_engine)
+        elif user_input == 2:
+            # client_data = get_data_from_database(mysql_engine)
+            # Plot the data from the database with Plotille
+            plot_data_from_database_with_plotille()
+            # Get the data from the database and put into a dataframe
+            
+            # Plot the data from the database with Matplotlib
+            # plot_data_from_database_with_matplotlib(client_data)
 
-#         elif user_input ==3:
-#             condensed_data = get_condensed_data(mysql_engine)
+        elif user_input ==3:
+            condensed_data = get_condensed_data(mysql_engine)
 
-#             # Check the token count of the condensed data
-#             token_count = num_tokens_from_string(str(condensed_data))
-#             print(f"Token count of the condensed data: {token_count}")
+            # Check the token count of the condensed data
+            token_count = num_tokens_from_string(str(condensed_data))
+            print(f"Token count of the condensed data: {token_count}")
 
-#             if token_count < 3000:
-#                 ai_response = chat(condensed_data)
+            if token_count < 3000:
+                ai_response = chat(condensed_data)
 
-#         elif user_input == 4:
-#             break
+        elif user_input == 4:
+            break
 
-#         else:
-#             print("Invalid input, please try again.")
+        else:
+            print("Invalid input, please try again.")
     
 
 
-# Plot the data from the database with Matplotlib
-client_data = get_data_from_database(mysql_engine)
-plot_data_from_database_with_matplotlib(client_data)
 
 
 
