@@ -44,7 +44,6 @@ class GlucoseData(Base):
     name = Column(String)
     time_stamp = Column(DateTime, unique=True)
     glucose_value = Column(Float)
-
     
 # Function to read CSV file and create GlucoseData objects
 def read_csv(file_path):
@@ -114,46 +113,42 @@ def get_data_from_database(engine):
 
     # Filter DataFrame to include only the last 24 hours' data
     last_24_hours_data = data_frame[data_frame['time_stamp'] >= (max_timestamp - pd.DateOffset(days=1))]    
+
+    for item in last_24_hours_data:
+        print(item)
+    
     return last_24_hours_data
  
-def plot_data_from_database_with_matplotlib(data_frame):
+def convert_data_to_dict (last_24_hours_data):
+    # Convert DataFrame to a dictionary with 'time_stamp' and 'glucose_value' columns
+    data_dict = data_frame[['time_stamp', 'glucose_value']].to_dict(orient='records')
 
-    # Ensure that 'time_stamp' column is in datetime format
-    data_frame['time_stamp'] = pd.to_datetime(data_frame['time_stamp'])
+    # Display the resulting dictionary
+    print(data_dict)
 
-    # Sort DataFrame by time_stamp for proper plotting
-    data_frame = data_frame.sort_values(by='time_stamp')
+def plot_data_from_database_with_matplotlib(last_24_hours_data):
 
-    # Find the maximum timestamp in the data
-    max_timestamp = data_frame['time_stamp'].max()
+    if last_24_hours_data.empty:
+        print("No data available in the database.")
 
-    # Filter DataFrame to include only the last 24 hours' data
-    last_24_hours_data = data_frame[data_frame['time_stamp'] >= (max_timestamp - pd.DateOffset(days=1))]
+    else:
 
-    # Plot the data
-    plt.figure(figsize=(10, 6))
-    plt.plot(last_24_hours_data['time_stamp'], last_24_hours_data['glucose_value'], marker='o', linestyle='-', color='b')
-    plt.title('Blood Glucose Levels Over Time')
-    plt.xlabel('Time Stamp')
-    plt.ylabel('Glucose Value')
+        # Plot the data
+        plt.figure(figsize=(10, 6))
+        plt.plot(last_24_hours_data['time_stamp'], last_24_hours_data['glucose_value'], marker='o', linestyle='-', color='b')
+        plt.title('Blood Glucose Levels Over Time')
+        plt.xlabel('Time Stamp')
+        plt.ylabel('Glucose Value')
+        plt.gca().get_yaxis().set_major_formatter(ticker.FuncFormatter(lambda x, _: int(x)))# Set y-axis ticks to be integers
+        plt.xticks(rotation=45, fontsize = 8)# Set x-axis ticks to 45 degrees and size 8
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))# Reformat the timestamp on x-axis labels
+        plt.grid(True)
+        plt.tight_layout()
 
-    # Set y-axis ticks to be integers
-    plt.gca().get_yaxis().set_major_formatter(ticker.FuncFormatter(lambda x, _: int(x)))
-    # Set x-axis ticks to 45 degrees and size 8
-    plt.xticks(rotation=45, fontsize = 8)
+        # Show the plot
+        plt.show()
 
-    # Reformat the timestamp on x-axis labels
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
-
-    plt.grid(True)
-    plt.tight_layout()
-
-    # Show the plot
-    plt.show()
-
-def plot_data_from_database_with_plotille():
-
-    last_24_hours_data = get_data_from_database(mysql_engine)
+def plot_data_from_database_with_plotille(last_24_hours_data):
 
     if last_24_hours_data.empty:
         print("No data available in the database.")
@@ -168,7 +163,6 @@ def plot_data_from_database_with_plotille():
             align = '<' if left else ''
             return '{:{}{}d}'.format(int(val), align, chars)
 
-
         # Plot using plotille
         plot = plotille.Figure()
         plot.width = 80
@@ -182,37 +176,40 @@ def plot_data_from_database_with_plotille():
 
 
 # Function to get condensed data from the MySQL database
-def get_condensed_data(engine):
-    with Session(engine) as session:
-        # Query the database to get relevant data
-        # query_result = session.query(GlucoseData).all()
+def get_condensed_data(last_24_hours_data):
+    condensed_glucose_data = convert_data_to_dict(last_24_hours_data)
 
-        # Get the maximum timestamp in the database
-        max_timestamp = session.query(func.max(GlucoseData.time_stamp)).scalar()
-        # Calculate the start and end dates for filtering (from midnight to the end of the last day)
-        start_date = max_timestamp.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_date = max_timestamp.replace(hour=23, minute=59, second=59, microsecond=999999)
+    # with Session(engine) as session:
+    #     # Query the database to get relevant data
+    #     # query_result = session.query(GlucoseData).all()
 
-        # Query the data from the database for the last day
-        query_result = session.query(GlucoseData).filter(GlucoseData.time_stamp.between(start_date, end_date)).all()
+    #     # Get the maximum timestamp in the database
+    #     max_timestamp = session.query(func.max(GlucoseData.time_stamp)).scalar()
+    #     # Calculate the start and end dates for filtering (from midnight to the end of the last day)
+    #     start_date = max_timestamp.replace(hour=0, minute=0, second=0, microsecond=0)
+    #     end_date = max_timestamp.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    #     # Query the data from the database for the last day
+    #     query_result = session.query(GlucoseData).filter(GlucoseData.time_stamp.between(start_date, end_date)).all()
 
 
-        # Extract relevant information for condensation
-        glucose_data_strings = [
-            (entry.time_stamp.strftime('%H:%M:%S'), int(entry.glucose_value))
-            for entry in query_result
-        ]
+    #     # Extract relevant information for condensation
+    #     glucose_data_strings = [
+    #         (entry.time_stamp.strftime('%H:%M:%S'), int(entry.glucose_value))
+    #         for entry in query_result
+    #     ]
 
-        return glucose_data_strings
+    return condensed_glucose_data
     
 if __name__ == "__main__":
     while True:
         user_input = int(input(
             "What would you like to do?\n"
             "1) Upload data from a csv file to the database\n"
-            "2) Plot the last 24 hours of uploaded data\n"
-            "3) Ask ChatGPT to analyze the most recent days data\n"
-            "4) Exit the program\n"
+            "2) Plot the last 24 hours of uploaded data on the command line\n"
+            "3) Plot the last 24 hours of data with Matplotlib\n"
+            "4) Ask ChatGPT to analyze the most recent days data\n"
+            "5) Exit the program\n"
         ))
 
         if user_input == 1:
@@ -224,25 +221,35 @@ if __name__ == "__main__":
                 insert_into_database(glucose_data_list, mysql_engine)
 
         elif user_input == 2:
-            # client_data = get_data_from_database(mysql_engine)
-            # Plot the data from the database with Plotille
-            plot_data_from_database_with_plotille()
             # Get the data from the database and put into a dataframe
-            
-            # Plot the data from the database with Matplotlib
-            # plot_data_from_database_with_matplotlib(client_data)
+            client_data = get_data_from_database(mysql_engine)
 
-        elif user_input ==3:
-            condensed_data = get_condensed_data(mysql_engine)
+            # Plot the data from the database with Plotille
+            plot_data_from_database_with_plotille(client_data)
+            
+
+        elif user_input == 3:
+            # Get the data from the database and put into a dataframe
+            client_data = get_data_from_database(mysql_engine)
+
+            # Plot the data from the database with Matplotlib
+            plot_data_from_database_with_matplotlib(client_data)
+
+
+        elif user_input ==4:
+            # Get the data from the database and put into a dataframe
+            client_data = get_data_from_database(mysql_engine)
+
+            condensed_data = get_condensed_data(client_data)
 
             # Check the token count of the condensed data
             token_count = num_tokens_from_string(str(condensed_data))
             print(f"Token count of the condensed data: {token_count}")
 
-            if token_count < 3000:
-                ai_response = chat(condensed_data)
+            # if token_count < 3000:
+            #     ai_response = chat(condensed_data)
 
-        elif user_input == 4:
+        elif user_input == 5:
             break
 
         else:
