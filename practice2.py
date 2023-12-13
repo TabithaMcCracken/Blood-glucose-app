@@ -24,6 +24,7 @@ from token_count import num_tokens_from_string
 import gzip
 import json
 from open_ai_chat import chat
+import zlib
 
 
 file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cgm_data_one_week.csv"
@@ -101,7 +102,10 @@ def get_data_from_database(engine):
         # Convert the query result to a Pandas DataFrame
         data_frame = pd.DataFrame([(data.id, data.name, data.time_stamp, data.glucose_value) for data in query_result],
                             columns=['id', 'name', 'time_stamp', 'glucose_value'])
-        
+    return data_frame
+
+def get_last_24_hours_data (data_frame):
+
     # Ensure that 'time_stamp' column is in datetime format
     data_frame['time_stamp'] = pd.to_datetime(data_frame['time_stamp'])
 
@@ -118,13 +122,37 @@ def get_data_from_database(engine):
         print(item)
     
     return last_24_hours_data
- 
-def convert_data_to_dict (last_24_hours_data):
-    # Convert DataFrame to a dictionary with 'time_stamp' and 'glucose_value' columns
-    data_dict = data_frame[['time_stamp', 'glucose_value']].to_dict(orient='records')
 
-    # Display the resulting dictionary
-    print(data_dict)
+def convert_dataframe_to_string(data_frame):
+    string_data = ""
+    for index, row in data_frame.iterrows():
+        string_data += f"{row['time_stamp'], {row['glucose_value']}}\n"
+
+    return string_data.strip()
+
+def convert_dataframe_to_compressed_string(data_frame):
+    """
+    Convert a Pandas DataFrame to a compressed string.
+
+    Parameters:
+    - data_frame (pd.DataFrame): The DataFrame to be converted.
+
+    Returns:
+    - str: Compressed string representation of the DataFrame.
+    """
+    # Use a shorter time format
+    data_frame['time_stamp'] = data_frame['time_stamp'].str.split('T').str[0]
+
+    # Convert DataFrame to a string with a comma as a delimiter
+    string_data = data_frame.to_csv(index=False)
+
+    # Compress the string
+    compressed_data = zlib.compress(string_data.encode('utf-8'))
+
+    # Convert compressed bytes to a string
+    compressed_string = compressed_data.decode('utf-8')
+
+    return compressed_string
 
 def plot_data_from_database_with_matplotlib(last_24_hours_data):
 
@@ -174,32 +202,6 @@ def plot_data_from_database_with_plotille(last_24_hours_data):
         plot.plot(time_stamps, glucose_values, lc='red')
         print(plot.show(legend=True))
 
-
-# Function to get condensed data from the MySQL database
-def get_condensed_data(last_24_hours_data):
-    condensed_glucose_data = convert_data_to_dict(last_24_hours_data)
-
-    # with Session(engine) as session:
-    #     # Query the database to get relevant data
-    #     # query_result = session.query(GlucoseData).all()
-
-    #     # Get the maximum timestamp in the database
-    #     max_timestamp = session.query(func.max(GlucoseData.time_stamp)).scalar()
-    #     # Calculate the start and end dates for filtering (from midnight to the end of the last day)
-    #     start_date = max_timestamp.replace(hour=0, minute=0, second=0, microsecond=0)
-    #     end_date = max_timestamp.replace(hour=23, minute=59, second=59, microsecond=999999)
-
-    #     # Query the data from the database for the last day
-    #     query_result = session.query(GlucoseData).filter(GlucoseData.time_stamp.between(start_date, end_date)).all()
-
-
-    #     # Extract relevant information for condensation
-    #     glucose_data_strings = [
-    #         (entry.time_stamp.strftime('%H:%M:%S'), int(entry.glucose_value))
-    #         for entry in query_result
-    #     ]
-
-    return condensed_glucose_data
     
 if __name__ == "__main__":
     while True:
@@ -224,13 +226,19 @@ if __name__ == "__main__":
             # Get the data from the database and put into a dataframe
             client_data = get_data_from_database(mysql_engine)
 
+            # Get just the last 24 hours of data
+            last_24_hours_data = get_last_24_hours_data(client_data)
+
             # Plot the data from the database with Plotille
-            plot_data_from_database_with_plotille(client_data)
+            plot_data_from_database_with_plotille(last_24_hours_data)
             
 
         elif user_input == 3:
             # Get the data from the database and put into a dataframe
             client_data = get_data_from_database(mysql_engine)
+
+            # Get just the last 24 hours of data
+            last_24_hours_data = get_last_24_hours_data(client_data)
 
             # Plot the data from the database with Matplotlib
             plot_data_from_database_with_matplotlib(client_data)
@@ -240,14 +248,18 @@ if __name__ == "__main__":
             # Get the data from the database and put into a dataframe
             client_data = get_data_from_database(mysql_engine)
 
-            condensed_data = get_condensed_data(client_data)
+            # Get just the last 24 hours of data
+            last_24_hours_data = get_last_24_hours_data(client_data)
+
+            # Condense the data
+            condensed_string_data = convert_dataframe_to_compressed_string (last_24_hours_data)
 
             # Check the token count of the condensed data
-            token_count = num_tokens_from_string(str(condensed_data))
+            token_count = num_tokens_from_string(str(condensed_string_data))
             print(f"Token count of the condensed data: {token_count}")
 
             # if token_count < 3000:
-            #     ai_response = chat(condensed_data)
+            #     ai_response = chat(condensed_string_data)
 
         elif user_input == 5:
             break
