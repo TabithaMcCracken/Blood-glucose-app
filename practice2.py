@@ -25,6 +25,7 @@ import gzip
 import json
 from open_ai_chat import chat
 import zlib
+import base64
 
 
 file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cgm_data_one_week.csv"
@@ -117,16 +118,13 @@ def get_last_24_hours_data (data_frame):
 
     # Filter DataFrame to include only the last 24 hours' data
     last_24_hours_data = data_frame[data_frame['time_stamp'] >= (max_timestamp - pd.DateOffset(days=1))]    
-
-    for item in last_24_hours_data:
-        print(item)
     
     return last_24_hours_data
 
 def convert_dataframe_to_string(data_frame):
     string_data = ""
     for index, row in data_frame.iterrows():
-        string_data += f"{row['time_stamp'], {row['glucose_value']}}\n"
+        string_data += f"{row['time_stamp']}:{row['glucose_value']}\n"
 
     return string_data.strip()
 
@@ -141,7 +139,7 @@ def convert_dataframe_to_compressed_string(data_frame):
     - str: Compressed string representation of the DataFrame.
     """
     # Use a shorter time format
-    data_frame['time_stamp'] = data_frame['time_stamp'].str.split('T').str[0]
+    data_frame['time_stamp'] = data_frame['time_stamp'].dt.strftime('%Y-%m-%d')
 
     # Convert DataFrame to a string with a comma as a delimiter
     string_data = data_frame.to_csv(index=False)
@@ -149,10 +147,12 @@ def convert_dataframe_to_compressed_string(data_frame):
     # Compress the string
     compressed_data = zlib.compress(string_data.encode('utf-8'))
 
-    # Convert compressed bytes to a string
-    compressed_string = compressed_data.decode('utf-8')
+    # Base64 encode the compressed data
+    base64_encoded_data = base64.b64encode(compressed_data).decode('utf-8')
 
-    return compressed_string
+    print (base64_encoded_data)
+    print (type(base64_encoded_data))
+    return base64_encoded_data
 
 def plot_data_from_database_with_matplotlib(last_24_hours_data):
 
@@ -252,7 +252,7 @@ if __name__ == "__main__":
             last_24_hours_data = get_last_24_hours_data(client_data)
 
             # Condense the data
-            condensed_string_data = convert_dataframe_to_compressed_string (last_24_hours_data)
+            condensed_string_data = convert_dataframe_to_string (last_24_hours_data)
 
             # Check the token count of the condensed data
             token_count = num_tokens_from_string(str(condensed_string_data))
