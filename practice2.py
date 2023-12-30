@@ -254,12 +254,10 @@ if __name__ == "__main__":
             # Condense the data
             condensed_string_data = convert_dataframe_to_string (last_24_hours_data)
 
-            # Check the token count of the condensed data
+            # Check the token count of the condensed data and run chat
             token_count = num_tokens_from_string(str(condensed_string_data))
-            print(f"Token count of the condensed data: {token_count}")
-
-            # if token_count < 3000:
-            #     ai_response = chat(condensed_string_data)
+            if token_count < 128000:
+                ai_response = chat(condensed_string_data)
 
         elif user_input == 5:
             break
