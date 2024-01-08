@@ -1,5 +1,4 @@
 import tiktoken
-from make_sample_data import generate_glucose_levels
 
 def num_tokens_from_string(string: str) -> int:
     """Returns the number of tokens in a text string."""
@@ -10,6 +9,6 @@ def num_tokens_from_string(string: str) -> int:
 
 
 if __name__ == "__main__":
-    sample_data = "I love pizza." # Where should this go? Is it global?
+    sample_data = "2023-08-02 14:55:00:172.0, 2023-08-02 15:00:00:169.0, 2023-08-02 15:05:00:169.0"
     num_of_tokens = num_tokens_from_string(f"{sample_data}")
     print(num_of_tokens)

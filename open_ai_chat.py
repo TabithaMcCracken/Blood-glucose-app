@@ -1,6 +1,6 @@
 from secret import key
 from openai import OpenAI
-from make_sample_data import generate_glucose_levels
+# from make_sample_data import generate_glucose_levels
 from token_count import num_tokens_from_string
 
 def chat(cgm_data):
@@ -69,7 +69,7 @@ def chat(cgm_data):
 
 if __name__ == "__main__":
     # Create a data set to use
-    cgm_data = generate_glucose_levels()
+    sample_data = "2023-08-02 14:55:00:172.0, 2023-08-02 15:00:00:169.0, 2023-08-02 15:05:00:169.0"
 
     # Run the chat
-    analysis_conv = chat(cgm_data)
+    analysis_conv = chat(sample_data)
