@@ -1,12 +1,12 @@
-# This application allows the user to store cgm data to SQL database, get and 
-# plot the last 24 hours of data from the database, or ask ChatGPT to analyze 
+# This application allows the user to store blood glucose data to a SQL database, 
+# get and plot the last 24 hours of data from the database, or ask ChatGPT to analyze 
 # the last 24 hours of data
 
 
 import csv
 from datetime import datetime, timedelta
 import sqlalchemy
-from secret import password
+# from secret import password
 import pymysql
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, MetaData
 from sqlalchemy.orm import declarative_base, Session
@@ -19,25 +19,28 @@ from sqlalchemy.orm.exc import NoResultFound
 import matplotlib.ticker as ticker
 import matplotlib.dates as mdates
 import openai
-from secret import key
-from my_package.token_count import num_tokens_from_string
-import gzip
-import json
-from my_package.open_ai_chat import chat
+from token_count import num_tokens_from_string
+# import gzip
+# import json
+from open_ai_chat import chat
 import zlib
 import base64
+import os
 
 
-file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/cgm_data_one_week.csv"
+file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/blood_glucose_package/cgm_data_one_week.csv"
+
 
 # Define the SQLAlchemy model
 Base = declarative_base()
 
 # Create the MySQL engine
-mysql_engine = create_engine(f"mysql+mysqlconnector://root:{password}@localhost/glucose_data")
+database_password = os.environ.get('MYSQL_PASSWORD')
+mysql_engine = create_engine(f"mysql+mysqlconnector://root:{database_password}@localhost/glucose_data")
 
 # OpenAI API key
-openai.api_key = key
+openai_key = os.environ.get('OPENAI_KEY')
+openai.api_key = openai_key
 
 class GlucoseData(Base):
     __tablename__ = 'glucose_data'
@@ -110,14 +113,14 @@ def get_last_24_hours_data (data_frame):
     # Ensure that 'time_stamp' column is in datetime format
     data_frame['time_stamp'] = pd.to_datetime(data_frame['time_stamp'])
 
-    # Sort DataFrame by time_stamp for proper plotting
-    data_frame = data_frame.sort_values(by='time_stamp')
-
     # Find the maximum timestamp in the data
     max_timestamp = data_frame['time_stamp'].max()
 
+    # Calculate the timestamp for 24 hours ago
+    last_24_hours_timestamp = max_timestamp - pd.Timedelta(days=1)
+
     # Filter DataFrame to include only the last 24 hours' data
-    last_24_hours_data = data_frame[data_frame['time_stamp'] >= (max_timestamp - pd.DateOffset(days=1))]    
+    last_24_hours_data = data_frame[data_frame['time_stamp'] >= last_24_hours_timestamp]   
     
     return last_24_hours_data
 
@@ -160,6 +163,7 @@ def plot_data_from_database_with_matplotlib(last_24_hours_data):
         print("No data available in the database.")
 
     else:
+        print(last_24_hours_data)
 
         # Plot the data
         plt.figure(figsize=(10, 6))
@@ -241,7 +245,7 @@ if __name__ == "__main__":
             last_24_hours_data = get_last_24_hours_data(client_data)
 
             # Plot the data from the database with Matplotlib
-            plot_data_from_database_with_matplotlib(client_data)
+            plot_data_from_database_with_matplotlib(last_24_hours_data)
 
 
         elif user_input ==4:
@@ -253,13 +257,12 @@ if __name__ == "__main__":
 
             # Condense the data
             condensed_string_data = convert_dataframe_to_string (last_24_hours_data)
-            print(condensed_string_data)
-            print(type(condensed_string_data))
+         
             # Check the token count of the condensed data and run chat
             token_count = num_tokens_from_string(str(condensed_string_data))
             
-            #if token_count < 128000:
-            #    ai_response = chat(condensed_string_data)
+            if token_count < 128000:
+                ai_response = chat(condensed_string_data)
 
         elif user_input == 5:
             break

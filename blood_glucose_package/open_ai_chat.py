@@ -1,7 +1,10 @@
-from secret import key
+
+import os
+key = os.environ.get('OPENAI_KEY')
+
 from openai import OpenAI
 # from make_sample_data import generate_glucose_levels
-from my_package.token_count import num_tokens_from_string
+from token_count import num_tokens_from_string
 
 def chat(cgm_data):
     """Generates a conversation with openai.
@@ -13,8 +16,7 @@ def chat(cgm_data):
     Returns:
         list: conversation with openai
     """
-    print("Here is the data we will analyze: ")
-    print(cgm_data)
+
     print("Welcome! Here is the analysis for this data...(Type 'exit' to quit)")
 
     client = OpenAI(api_key=key)
@@ -25,9 +27,8 @@ def chat(cgm_data):
     initial_user_prompt = ('Analyze the following blood glucose data where the '
                             'first number is the time stamp and the second is '
                             'the blood glucose level. Give us the blood glucose'
-                            ' range, the percentage of time in the 24 hour period'
-                            ' that the time stamps are in range between'
-                            ' 70 and 130, and general observations in one paragraph:'
+                            ' range, at what times are the levels out of the'
+                            ' 70-130 range and general observations in one paragraph:'
                             f'\n{cgm_data}')
     chatbot_conversation.append({"role": "user", "content": initial_user_prompt})
 
@@ -35,7 +36,6 @@ def chat(cgm_data):
         if num_tokens_from_string(chatbot_conversation) < 128000:
             
             token_size = num_tokens_from_string(chatbot_conversation)
-            print(f"Token Size: {token_size}")
 
             if token_size < 128000:
                 response = client.chat.completions.create(
@@ -47,7 +47,6 @@ def chat(cgm_data):
                 chatbot_repsonse = response.choices[0].message.content
                 print(f"{chatbot_repsonse}")
                 chatbot_conversation.append({"role": "assistant", "content": chatbot_repsonse})
-                print(f"Token size after response {num_tokens_from_string(chatbot_conversation)}")
 
             else:
                 print("The conversation is too large to process.")
