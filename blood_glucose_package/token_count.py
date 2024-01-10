@@ -11,17 +11,15 @@ def num_tokens_from_string(text: str) -> int:
         int: The number of tokens in the input text.
 
     Raises:
-        Exception: If there is an error during token counting, an exception is caught
-                   and an error message is printed, and the function returns 0.
+        ValueError: If the input type is not a valid type (str or int).
     """
-    try:
-        encoding_name = "cl100k_base"
-        encoding = tiktoken.get_encoding(encoding_name)
-        num_tokens = len(encoding.encode(str(text)))
-        return num_tokens
-    except Exception as e:
-        print(f"Error counting tokens: {e}")
-        return 0
+    if not isinstance(text, (str, int)):
+        raise ValueError("Invalid input type. Only strings or integers are allowed.")
+
+    encoding_name = "cl100k_base"
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(str(text)))
+    return num_tokens
 
 
 if __name__ == "__main__":
