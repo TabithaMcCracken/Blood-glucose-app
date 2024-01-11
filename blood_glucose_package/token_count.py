@@ -1,11 +1,11 @@
 import tiktoken
 
-def num_tokens_from_string(text: str) -> int:
+def num_tokens_from_string(data) -> int:
     """
-    Returns the number of tokens in a text string.
+    Calculates the number of tokens in a text string.
 
     Args:
-        text (str): The input text for which the number of tokens needs to be counted.
+        data (str or list): The input text for which the number of tokens needs to be counted.
 
     Returns:
         int: The number of tokens in the input text.
@@ -13,14 +13,21 @@ def num_tokens_from_string(text: str) -> int:
     Raises:
         ValueError: If the input type is not a valid type (str or int).
     """
-    if not isinstance(text, (str, int)):
-        raise ValueError("Invalid input type. Only strings or integers are allowed.")
 
-    encoding_name = "cl100k_base"
-    encoding = tiktoken.get_encoding(encoding_name)
-    num_tokens = len(encoding.encode(str(text)))
-    return num_tokens
-
+    if isinstance(data, str):
+        # Handle case where data is a string
+        encoding_name = "cl100k_base"
+        encoding = tiktoken.get_encoding(encoding_name)
+        num_tokens = len(encoding.encode(str(data)))
+        return num_tokens
+    elif isinstance(data, list):
+        # Handle case where data is a list of dictionaries
+        encoding_name = "cl100k_base"
+        encoding = tiktoken.get_encoding(encoding_name)
+        num_tokens = sum(len(item["content"].split()) for item in data)
+        return num_tokens
+    else:
+        raise ValueError("Invalid input type. Only strings, integers, or lists are allowed.")
 
 if __name__ == "__main__":
     # Sample data with 20 data points
