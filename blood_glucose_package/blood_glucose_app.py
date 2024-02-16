@@ -19,8 +19,11 @@ from token_count import num_tokens_from_string
 from open_ai_chat import chat
 import zlib
 import base64
+import tkinter as tk
+from tkinter import filedialog
+# from file_upload import browse_for_csv_file
 
-file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/blood_glucose_package/cgm_data_one_week.csv"
+#file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/blood_glucose_package/cgm_data_one_week.csv"
 
 # Define the SQLAlchemy model
 Base = declarative_base()
@@ -33,7 +36,27 @@ class GlucoseData(Base):
     time_stamp = Column(DateTime, unique=True)
     glucose_value = Column(Float)
     
-# Function to read CSV file and create GlucoseData objects
+
+def browse_for_csv_file():
+    """
+    Function to get the path of a .csv file using tkinter file dialog.
+    
+    Returns:
+        str: Path of the selected .csv file.
+        None: If no file is selected or the selected file is not a .csv file.
+    """
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+    
+    # Open file dialog and allow only .csv files to be selected
+    file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
+    
+    if file_path and file_path.lower().endswith('.csv'):
+        return file_path
+    else:
+        print("Please select a .csv file.")
+        return None
+
 def read_csv(file_path) -> list:
     """
     Read blood glucose data from a CSV file.
@@ -86,12 +109,12 @@ def insert_into_database(data_list: list, engine) -> None:
                     .filter_by(name=data.name, time_stamp=data.time_stamp)
                     .one()
                 )
-                print(f"Duplicate entry found for {data.name} at {data.time_stamp}. Skipping.")
+                # print(f"Duplicate entry found for {data.name} at {data.time_stamp}. Skipping.")
             except NoResultFound:
                 session.add(data)
                 
         session.commit()
-    print("Data added to the database.")
+    print("New data added to the database.")
 
 def get_data_from_database(engine) -> pd.DataFrame:
     """
@@ -225,6 +248,9 @@ def main() -> None:
             ))
 
             if user_input == 1:
+                # Get filepath from user
+                file_path = browse_for_csv_file()
+
                 # Get data from CSV file
                 glucose_data_list = read_csv(file_path)
 
