@@ -60,11 +60,6 @@ def chat(cgm_data, key):
     return chatbot_conversation
 
 if __name__ == "__main__":
-    # Get OPENAI API key from environment variable
     key = os.environ.get('OPENAI_KEY')
-
-    # Create a data set to use
     sample_data = "2023-08-02 14:55:00:172.0, 2023-08-02 15:00:00:169.0, 2023-08-02 15:05:00:169.0"
-
-    # Run the chat
     analysis_conv = chat(sample_data, key)

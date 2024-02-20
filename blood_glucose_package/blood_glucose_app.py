@@ -1,34 +1,33 @@
 import os
-
 import csv
 from datetime import datetime, timedelta
-import sqlalchemy
-import pymysql
+# import sqlalchemy
+# import pymysql
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, MetaData
 from sqlalchemy.orm import declarative_base, Session
 from sqlalchemy import func
-import pandas as pd
-import matplotlib.pyplot as plt
-import plotille
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
+import pandas as pd
+import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import matplotlib.dates as mdates
+import plotille
 import openai
 from token_count import num_tokens_from_string
-from open_ai_chat import chat
-import zlib
-import base64
+# from open_ai_chat import chat
 import tkinter as tk
 from tkinter import filedialog
-# from file_upload import browse_for_csv_file
-
-#file_path = "/Users/tabithamccracken/Documents/codingnomads/blood_glucose_app/blood_glucose_package/cgm_data_one_week.csv"
+from openai import OpenAI
+from token_count import num_tokens_from_string
 
 # Define the SQLAlchemy model
 Base = declarative_base()
 
 class GlucoseData(Base):
+    """
+    SQLAlchemy model for blood glucose data.
+    """
     __tablename__ = 'glucose_data'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -37,7 +36,7 @@ class GlucoseData(Base):
     glucose_value = Column(Float)
     
 
-def browse_for_csv_file():
+def browse_for_csv_file() -> str:
     """
     Function to get the path of a .csv file using tkinter file dialog.
     
@@ -46,9 +45,8 @@ def browse_for_csv_file():
         None: If no file is selected or the selected file is not a .csv file.
     """
     root = tk.Tk()
-    root.withdraw()  # Hide the main window
+    root.withdraw()
     
-    # Open file dialog and allow only .csv files to be selected
     file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
     
     if file_path and file_path.lower().endswith('.csv'):
@@ -71,14 +69,12 @@ def read_csv(file_path) -> list:
     with open(file_path, 'r') as csv_file:
         reader = csv.reader(csv_file)
         
-        # Read metadata (skip the first line)
         metadata_line = next(reader)
         patient_name = None
         for item in metadata_line:
             if item.startswith('Name:'):
                 patient_name = item.split('Name:')[1].strip()
 
-        # Read actual column headers
         headers = next(reader)
         
         for row in reader:
@@ -109,7 +105,6 @@ def insert_into_database(data_list: list, engine) -> None:
                     .filter_by(name=data.name, time_stamp=data.time_stamp)
                     .one()
                 )
-                # print(f"Duplicate entry found for {data.name} at {data.time_stamp}. Skipping.")
             except NoResultFound:
                 session.add(data)
                 
@@ -143,18 +138,10 @@ def get_last_24_hours_data (data_frame: pd.DataFrame) -> pd.DataFrame:
     - pd.DataFrame: Pandas DataFrame with the last 24 hours of data.
     """
 
-    # Ensure that 'time_stamp' column is in datetime format
     data_frame['time_stamp'] = pd.to_datetime(data_frame['time_stamp'])
-
-    # Find the maximum timestamp in the data
     max_timestamp = data_frame['time_stamp'].max()
-
-    # Calculate the timestamp for 24 hours ago
     last_24_hours_timestamp = max_timestamp - pd.Timedelta(days=1)
-
-    # Filter DataFrame to include only the last 24 hours' data
     last_24_hours_data = data_frame[data_frame['time_stamp'] >= last_24_hours_timestamp]   
-    
     return last_24_hours_data
 
 def convert_dataframe_to_compressed_string(data_frame: pd.DataFrame) -> str:
@@ -185,19 +172,21 @@ def plot_data_from_database_with_matplotlib(last_24_hours_data: pd.DataFrame) ->
         print("No data available in the database.")
 
     else:
-        # Plot the data
         plt.figure(figsize=(10, 6))
-        plt.plot(last_24_hours_data['time_stamp'], last_24_hours_data['glucose_value'], marker='o', linestyle='-', color='b')
+        plt.plot(
+            last_24_hours_data['time_stamp'], 
+            last_24_hours_data['glucose_value'], 
+            marker='o', 
+            linestyle='-', 
+            color='b')
         plt.title('Blood Glucose Levels Over Time')
         plt.xlabel('Time Stamp')
         plt.ylabel('Glucose Value')
         plt.gca().get_yaxis().set_major_formatter(ticker.FuncFormatter(lambda x, _: int(x)))# Set y-axis ticks to be integers
-        plt.xticks(rotation=45, fontsize = 8)# Set x-axis ticks to 45 degrees and size 8
+        plt.xticks(rotation=45, fontsize = 8)
         plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))# Reformat the timestamp on x-axis labels
         plt.grid(True)
         plt.tight_layout()
-
-        # Show the plot
         plt.show()
 
 def plot_data_from_database_with_plotille(last_24_hours_data: pd.DataFrame) -> None:
@@ -210,9 +199,7 @@ def plot_data_from_database_with_plotille(last_24_hours_data: pd.DataFrame) -> N
 
     if last_24_hours_data.empty:
         print("No data available in the database.")
-
     else:
-
         time_stamps = last_24_hours_data['time_stamp']
         glucose_values = last_24_hours_data['glucose_value']
 
@@ -221,7 +208,6 @@ def plot_data_from_database_with_plotille(last_24_hours_data: pd.DataFrame) -> N
             align = '<' if left else ''
             return '{:{}{}d}'.format(int(val), align, chars)
 
-        # Plot using plotille
         plot = plotille.Figure()
         plot.width = 80
         plot.height = 30
@@ -231,16 +217,75 @@ def plot_data_from_database_with_plotille(last_24_hours_data: pd.DataFrame) -> N
         plot.set_y_limits(min(glucose_values), max(glucose_values) + 10)
         plot.plot(time_stamps, glucose_values, lc='red')
         print(plot.show(legend=True))
+
+def chat(cgm_data, key):
+    """Generates a conversation with openai.
+
+    Args:
+        cgm_data (tuple): 24 hours of bgl's in 5 minute increments
+        key (str): OpenAI API key
+
+    Returns:
+        list: conversation with openai
+    """
+
+    print("Welcome! Here is the analysis for this data...(Type 'exit' to quit)")
+
+    client = OpenAI(api_key=key)
+    chatbot_conversation = []
+    system_msg = "You are a helpful assistant."
+    chatbot_conversation.append({"role": "system", "content": system_msg})
+
+    initial_user_prompt = (
+        'Analyze the following blood glucose data where the '
+        'first number is the time stamp and the second is '
+        'the blood glucose level. Give us the blood glucose'
+        ' range, at what times are the levels out of the'
+        ' 70-130 range and general observations in one paragraph:'
+        f'\n{cgm_data}'
+    )
+    chatbot_conversation.append({"role": "user", "content": initial_user_prompt})
+
+    while True:
+            
+        token_size = num_tokens_from_string(chatbot_conversation)
+
+        if token_size < 128000:
+            response = client.chat.completions.create(
+                model = "gpt-4-1106-preview",
+                messages = chatbot_conversation
+            )
+
+            chatbot_repsonse = response.choices[0].message.content
+            print(chatbot_repsonse)
+            chatbot_conversation.append({"role": "assistant", "content": chatbot_repsonse})
+
+        else:
+            print("The conversation is too large to process.")
+            break
+
+        print ("To exit the conversation, type: 'exit'.")
+        user_input = input("User: ")
+        if user_input.lower() == "exit":
+            break
+
+        else:
+            chatbot_conversation.append({"role": "user", "content": user_input})
+
+    return chatbot_conversation
  
 def main() -> None:
     """
     Main function to interact with the user and execute chosen actions.
+
+    Raises:
+        ValueError: If the user enters a non-integer value.
     """
     while True:
         try:
             user_input = int(input(
                 "What would you like to do?\n"
-                "1) Upload data from a csv file to the database\n"
+                "1) Upload CGM data from a csv file to the database\n"
                 "2) Plot the last 24 hours of uploaded data on the command line\n"
                 "3) Plot the last 24 hours of data with Matplotlib\n"
                 "4) Ask ChatGPT to analyze the most recent days data\n"
@@ -248,49 +293,26 @@ def main() -> None:
             ))
 
             if user_input == 1:
-                # Get filepath from user
                 file_path = browse_for_csv_file()
-
-                # Get data from CSV file
                 glucose_data_list = read_csv(file_path)
-
-                # Put data into database
                 if glucose_data_list:
                     insert_into_database(glucose_data_list, MYSQL_ENGINE)
 
             elif user_input == 2:
-                # Get the data from the database and put into a dataframe
                 client_data = get_data_from_database(MYSQL_ENGINE)
-
-                # Get just the last 24 hours of data
                 last_24_hours_data = get_last_24_hours_data(client_data)
-
-                # Plot the data from the database with Plotille
                 plot_data_from_database_with_plotille(last_24_hours_data)
                 
             elif user_input == 3:
-                # Get the data from the database and put into a dataframe
                 client_data = get_data_from_database(MYSQL_ENGINE)
-
-                # Get just the last 24 hours of data
                 last_24_hours_data = get_last_24_hours_data(client_data)
-
-                # Plot the data from the database with Matplotlib
                 plot_data_from_database_with_matplotlib(last_24_hours_data)
 
             elif user_input ==4:
-                # Get the data from the database and put into a dataframe
                 client_data = get_data_from_database(MYSQL_ENGINE)
-
-                # Get just the last 24 hours of data
                 last_24_hours_data = get_last_24_hours_data(client_data)
-
-                # Condense the data
                 condensed_string_data = convert_dataframe_to_compressed_string (last_24_hours_data)
-            
-                # Check the token count of the condensed data and run chat
                 token_count = num_tokens_from_string(str(condensed_string_data))
-                
                 if token_count < 128000:
                     ai_response = chat(condensed_string_data, OPENAI_KEY)
 
@@ -302,11 +324,8 @@ def main() -> None:
             print(f"An error occurred: {str(e)}")
     
 if __name__ == "__main__":
-    # Create the MySQL engine
     DATABASE_PASSWORD = os.environ.get('MYSQL_PASSWORD')
     MYSQL_ENGINE = create_engine(f"mysql+mysqlconnector://root:{DATABASE_PASSWORD}@localhost/glucose_data")
-
-    # OpenAI API key
     OPENAI_KEY = os.environ.get('OPENAI_KEY')
     openai.api_key = OPENAI_KEY
 
