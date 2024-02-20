@@ -298,23 +298,21 @@ def main() -> None:
                 if glucose_data_list:
                     insert_into_database(glucose_data_list, MYSQL_ENGINE)
 
-            elif user_input == 2:
+            elif user_input in [2, 3, 4]:
                 client_data = get_data_from_database(MYSQL_ENGINE)
-                last_24_hours_data = get_last_24_hours_data(client_data)
-                plot_data_from_database_with_plotille(last_24_hours_data)
-                
-            elif user_input == 3:
-                client_data = get_data_from_database(MYSQL_ENGINE)
-                last_24_hours_data = get_last_24_hours_data(client_data)
-                plot_data_from_database_with_matplotlib(last_24_hours_data)
-
-            elif user_input ==4:
-                client_data = get_data_from_database(MYSQL_ENGINE)
-                last_24_hours_data = get_last_24_hours_data(client_data)
-                condensed_string_data = convert_dataframe_to_compressed_string (last_24_hours_data)
-                token_count = num_tokens_from_string(str(condensed_string_data))
-                if token_count < 128000:
-                    ai_response = chat(condensed_string_data, OPENAI_KEY)
+                if client_data.empty:
+                    print("No data available in the database.")
+                else:
+                    last_24_hours_data = get_last_24_hours_data(client_data)
+                    if user_input == 2:
+                        plot_data_from_database_with_plotille(last_24_hours_data)
+                    elif user_input == 3:
+                        plot_data_from_database_with_matplotlib(last_24_hours_data)
+                    elif user_input == 4:
+                        condensed_string_data = convert_dataframe_to_compressed_string(last_24_hours_data)
+                        token_count = num_tokens_from_string(str(condensed_string_data))
+                        if token_count < 128000:
+                            ai_response = chat(condensed_string_data, OPENAI_KEY)
 
             elif user_input == 5:
                 break
