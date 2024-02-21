@@ -1,6 +1,6 @@
 # Blood Glucose Data Handler
 ## Overview
-This Python script is designed to handle blood glucose data obtained from a CGM through Glooko for individuals with Type 1 or Type 2 Diabetes. It provides functionalities to upload blood glucose data from a CSV file downloaded from the users Glooko account to a MySQL database, plot the last 24 hours of uploaded data, and analyze the data using ChatGPT.
+This Python script is designed to handle blood glucose data obtained from a CGM through Glooko for individuals with Type 1 or Type 2 Diabetes. It provides functionalities to store blood glucose data from a CSV file in a MySQL database, plot the last 24 hours of uploaded data, and analyze the data using ChatGPT.
 
 ## Installation
 1. Clone this repository to your local machine.
@@ -65,8 +65,7 @@ Follow these steps to export your CGM data from Glooko:
 
 7. Select the Appropriate File: Among the extracted files, locate the CSV file containing the CGM data. This file is typically named something like cgm_data.csv.
 
-8. Use with the Program: Now that you have the CSV file containing your CGM data, you can use it with the provided Python program. Follow the instructions in the program's documentation to upload the CSV file and analyze your CGM data
-
+8. Use with the Program: Now that you have the CSV file containing your CGM data, you can use it with the provided Python program. Follow the instructions in the program to upload the CSV file and analyze your CGM data
 
 
 ## Usage
