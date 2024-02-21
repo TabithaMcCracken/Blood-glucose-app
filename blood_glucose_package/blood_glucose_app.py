@@ -293,6 +293,7 @@ def main() -> None:
             ))
 
             if user_input == 1:
+                print("Please provide the CSV file from Glooko or use the provided sample file.")
                 file_path = browse_for_csv_file()
                 glucose_data_list = read_csv(file_path)
                 if glucose_data_list:

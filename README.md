@@ -32,11 +32,36 @@ pip install sqlalchemy pandas matplotlib plotille openai
   ```
 - Replace `your_openai_api_key` with your actual OpenAI API key.
 
-- To set the environment variable for the MySQL password using the following command:
+- Set the environment variable for the MySQL password using the following command:
   ```
   export MYSQL_PASSWORD=your_mysql_password
   ```
 - Replace `your_mysql_password` with your actual MySQL password
+
+5. **Export CGM Data from Glooko
+- To use this program with CGM data from Glooko, you'll need to export the data from the Glooko
+platform and save it as a CSV file. 
+
+Note: If you don't have CGM data from Glooko or prefer not to download it, you can use the sample data file provided in the package folder
+
+Follow these steps to export your CGM data from Glooko:
+
+1. Log in to Glooko: Visit the [Glooko](https://glooko.com) website and log in to your account.
+
+2. From the main "Summary" page, click on "Export to CSV".
+
+3. Select the CGM Data time range that you want to download. You may have options to export data for specific time periods, such as the last week, month, or custom date range.
+
+4. Click "Export" to download the files.
+
+5. After the report has been generated, Glooko may provide the data in a zip folder containing multiple files. Download the zip folder to your computer.
+
+6. Extract Files: Once the zip folder is downloaded, extract its contents to a location on your computer. You should now have multiple files containing the CGM data.
+
+7. Select the Appropriate File: Among the extracted files, locate the CSV file containing the CGM data. This file is typically named something like cgm_data.csv.
+
+8. Use with the Program: Now that you have the CSV file containing your CGM data, you can use it with the provided Python program. Follow the instructions in the program's documentation to upload the CSV file and analyze your CGM data
+
 
 
 ## Usage
