@@ -21,12 +21,17 @@ pip install sqlalchemy pandas matplotlib plotille openai
   ```
 - Replace `'your_username'` and `'your_password'` with your desired username and password.
 
-4. **Set Up Environment Variables:**
-- Set up environment variables for the MySQL password (`MYSQL_PASSWORD`) and your OpenAI API key (`OPENAI_KEY`).
+4. **Obtain an OpenAI Key**
 - For the ChatGPT functionality, you also need to sign up for an OpenAI API account and obtain an API key.
+
 - Sign up for an account at [OpenAI](https://openai.com/) if you haven't already.
+
 - After signing up, generate an API key from your account dashboard.
-- Set the environment variable for the OpenAI API key:
+
+5. **Set Up Environment Variables:**
+- Set up environment variables for the MySQL password (`MYSQL_PASSWORD`) and your OpenAI API key (`OPENAI_KEY`).
+
+- Set the environment variable for the OpenAI API key using the following command:
   ```
   export OPENAI_KEY=your_openai_api_key
   ```
@@ -39,10 +44,10 @@ pip install sqlalchemy pandas matplotlib plotille openai
 - Replace `your_mysql_password` with your actual MySQL password
 
 5. **Export CGM Data from Glooko
-- To use this program with CGM data from Glooko, you'll need to export the data from the Glooko
+- To use this program with CGM data from Glooko, you'll need to export the CGM data from the Glooko
 platform and save it as a CSV file. 
 
-Note: If you don't have CGM data from Glooko or prefer not to download it, you can use the sample data file provided in the package folder
+Note: If you don't have CGM data from Glooko or prefer not to download it, you can use the sample data file provided in the package folder.
 
 Follow these steps to export your CGM data from Glooko:
 
@@ -67,7 +72,7 @@ Follow these steps to export your CGM data from Glooko:
 ## Usage
 To run the script, execute the main.py file using Python:
 ```bash
-python main.py
+python blood_glucose_app.py
 ```
 Follow the prompts to interact with the script and perform various actions such as uploading data, plotting graphs, and analyzing data with ChatGPT.
 
