@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, MetaData
 from sqlalchemy.orm import declarative_base, Session
 from sqlalchemy import func
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker # Do i need this?
 from sqlalchemy.orm.exc import NoResultFound
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -14,8 +14,8 @@ import matplotlib.ticker as ticker
 import matplotlib.dates as mdates
 import plotille
 import openai
-from token_count import num_tokens_from_string
-from open_ai_chat import chat
+from modules.token_count import num_tokens_from_string
+from scripts.open_ai_chat import chat
 import tkinter as tk
 from tkinter import filedialog
 

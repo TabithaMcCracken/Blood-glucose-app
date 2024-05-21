@@ -1,7 +1,11 @@
 
 import os
+import sys
 from openai import OpenAI
-from token_count import num_tokens_from_string
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(project_root)
+
+from modules.token_count import num_tokens_from_string
 
 def chat(cgm_data, key):
     """Generates a conversation with openai.
