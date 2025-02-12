@@ -2,23 +2,22 @@
 import os
 import sys
 from openai import OpenAI
+import PySimpleGUI as sg
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(project_root)
 
 from modules.token_count import num_tokens_from_string
 
 def chat(cgm_data, key):
-    """Generates a conversation with openai.
+    """Generates a conversation with OpenAI and displays the entire conversation in a PySimpleGUI window.
 
     Args:
-        cgm_data (tuple): 24 hours of bgl's in 5 minute increments
+        cgm_data (tuple): 24 hours of blood glucose data in 5-minute increments
         key (str): OpenAI API key
 
     Returns:
-        list: conversation with openai
+        None
     """
-
-    print("Welcome! Here is the analysis for this data...(Type 'exit' to quit)")
 
     client = OpenAI(api_key=key)
     chatbot_conversation = []
@@ -35,33 +34,70 @@ def chat(cgm_data, key):
     )
     chatbot_conversation.append({"role": "user", "content": initial_user_prompt})
 
+    # Create the layout for the window
+    layout = [
+        [sg.Text('ChatGPT Analysis')],
+        [sg.Multiline(size=(60, 20), key='-CONVERSATION-', disabled=True)],
+        [sg.InputText(size=(45, 1), key='-USER_INPUT-'), sg.Button('Send')]
+    ]
+
+    # Create the window with finalize=True
+    window = sg.Window('ChatGPT Conversation', layout, return_keyboard_events=True, finalize=True)
+
+    # Process the initial analysis and update the window
+    token_size = num_tokens_from_string(chatbot_conversation)
+
+    if token_size < 128000:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=chatbot_conversation
+        )
+
+        chatbot_response = response.choices[0].message.content
+        chatbot_conversation.append({"role": "assistant", "content": chatbot_response})
+
+        # Update the conversation in the window, skipping both system and initial user prompt
+        conversation_text = "\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in chatbot_conversation[2:]])  # Skip the first two messages (system and initial user prompt)
+        window['-CONVERSATION-'].update(conversation_text)
+
+    else:
+        sg.popup("Conversation too large to process.")
+        window.close()
+        return
+
+    # Main event loop to handle user input and responses
     while True:
-            
-        token_size = num_tokens_from_string(chatbot_conversation)
+        event, values = window.read()
 
-        if token_size < 128000:
-            response = client.chat.completions.create(
-                model = "gpt-4-1106-preview",
-                messages = chatbot_conversation
-            )
-
-            chatbot_repsonse = response.choices[0].message.content
-            print(chatbot_repsonse)
-            chatbot_conversation.append({"role": "assistant", "content": chatbot_repsonse})
-
-        else:
-            print("The conversation is too large to process.")
+        if event == sg.WIN_CLOSED:
             break
 
-        print ("To exit the conversation, type: 'exit'.")
-        user_input = input("User: ")
-        if user_input.lower() == "exit":
-            break
-
-        else:
+        if event == 'Send':
+            user_input = values['-USER_INPUT-']
             chatbot_conversation.append({"role": "user", "content": user_input})
 
-    return chatbot_conversation
+            # Process the conversation with OpenAI
+            token_size = num_tokens_from_string(chatbot_conversation)
+
+            if token_size < 128000:
+                response = client.chat.completions.create(
+                    model="gpt-4",
+                    messages=chatbot_conversation
+                )
+
+                chatbot_response = response.choices[0].message.content
+                chatbot_conversation.append({"role": "assistant", "content": chatbot_response})
+
+                # Update the conversation in the window, starting from the assistant's response
+                conversation_text = "\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in chatbot_conversation[2:]])  # Skip both the system and initial user prompt
+                window['-CONVERSATION-'].update(conversation_text)
+            else:
+                sg.popup("Conversation too large to process.")
+                break
+
+            window['-USER_INPUT-'].update('')
+
+    window.close()
 
 if __name__ == "__main__":
     key = os.environ.get('OPENAI_KEY')
